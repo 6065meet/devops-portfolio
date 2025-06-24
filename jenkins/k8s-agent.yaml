@@ -7,6 +7,8 @@ spec:
   containers:
   - name: docker
     image: docker:dind
+    securityContext:
+      privileged: true
     tty: true
     volumeMounts:
     - name: docker-sock
@@ -14,13 +16,8 @@ spec:
     - name: workspace-volume
       mountPath: /home/jenkins/agent
   - name: jnlp
-    image: jenkins/inbound-agent:3309.v27b_9314fd1a_4-1
+    image: jenkins/inbound-agent:latest
     env:
-    - name: JENKINS_SECRET
-      valueFrom:
-        secretKeyRef:
-          name: jenkins-agent
-          key: jenkins-secret
     - name: JENKINS_AGENT_WORKDIR
       value: /home/jenkins/agent
     volumeMounts:

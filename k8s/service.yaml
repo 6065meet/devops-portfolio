@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: static-site-service
+  namespace: portfolio
+spec:
+  selector:
+    app: static-site
+  type: NodePort
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+      nodePort: 30080  # optional, can be dynamic
