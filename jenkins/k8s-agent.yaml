@@ -1,29 +1,27 @@
 apiVersion: v1
 kind: Pod
 metadata:
+  name: devops-agent
   labels:
-    some-label: devops-agent
+    jenkins/label: devops-agent
 spec:
   containers:
-    - name: jnlp
-      image: jenkins/inbound-agent:alpine
-      args: ['$(JENKINS_SECRET)', '$(JENKINS_NAME)']
-
     - name: docker
-      image: docker:24.0.2-dind
-      securityContext:
-        privileged: true
-      volumeMounts:
-        - name: docker-sock
-          mountPath: /var/run/docker.sock
-
-    - name: kubectl
-      image: bitnami/kubectl:latest
+      image: docker:dind
       command:
         - cat
       tty: true
-
+      volumeMounts:
+        - name: docker-sock
+          mountPath: /var/run/docker.sock
+        - name: workspace-volume
+          mountPath: /home/jenkins/agent
+  restartPolicy: Never
+  nodeSelector:
+    kubernetes.io/os: linux
   volumes:
     - name: docker-sock
       hostPath:
         path: /var/run/docker.sock
+    - name: workspace-volume
+      emptyDir: {}
