@@ -5,34 +5,26 @@ metadata:
     some-label: devops-agent
 spec:
   containers:
-  - name: docker
-    image: docker:dind
-    securityContext:
-      privileged: true
-    tty: true
-    volumeMounts:
-    - name: docker-sock
-      mountPath: /var/run/docker.sock
-    - name: workspace-volume
-      mountPath: /home/jenkins/agent
+    - name: docker
+      image: docker:24.0.5-cli
+      command:
+        - cat
+      tty: true
+      volumeMounts:
+        - name: workspace-volume
+          mountPath: /home/jenkins/agent
 
-  - name: jnlp
-    image: jenkins/inbound-agent:3309.v27b_9314fd1a_4-1
-    env:
-    - name: JENKINS_SECRET
-      valueFrom:
-        secretKeyRef:
-          name: jenkins-agent
-          key: jenkins-secret
-    - name: JENKINS_AGENT_WORKDIR
-      value: /home/jenkins/agent
-    volumeMounts:
-    - name: workspace-volume
-      mountPath: /home/jenkins/agent
+    - name: jnlp
+      image: jenkins/inbound-agent:3309.v27b_9314fd1a_4-1
+      env:
+        - name: JENKINS_URL
+          value: "http://jenkins.jenkins.svc.cluster.local:8080"
+        - name: JENKINS_AGENT_WORKDIR
+          value: "/home/jenkins/agent"
+      volumeMounts:
+        - name: workspace-volume
+          mountPath: /home/jenkins/agent
 
   volumes:
-  - name: docker-sock
-    hostPath:
-      path: /var/run/docker.sock
-  - name: workspace-volume
-    emptyDir: {}
+    - name: workspace-volume
+      emptyDir: {}
