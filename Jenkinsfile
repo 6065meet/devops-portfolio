@@ -8,19 +8,13 @@ apiVersion: v1
 kind: Pod
 spec:
   containers:
-    - name: docker
-      image: docker:24.0.2-dind
-      securityContext:
-        privileged: true
-      volumeMounts:
-        - name: docker-sock
-          mountPath: /var/run/docker.sock
-
     - name: kubectl
       image: bitnami/kubectl:latest
       command: ['cat']
       tty: true
-
+      volumeMounts:
+        - mountPath: /var/run/docker.sock
+          name: docker-sock
   volumes:
     - name: docker-sock
       hostPath:
@@ -43,20 +37,13 @@ spec:
       }
     }
 
-    stage('Build Docker Image') {
+    stage('Build & Push Docker Image') {
       steps {
-        container('docker') {
-          sh 'docker build -t $DOCKER_IMAGE .'
-        }
-      }
-    }
-
-    stage('Push to DockerHub') {
-      steps {
-        container('docker') {
+        container('kubectl') {
           withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
             sh '''
               echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+              docker build -t $DOCKER_IMAGE .
               docker push $DOCKER_IMAGE
             '''
           }
