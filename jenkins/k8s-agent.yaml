@@ -15,14 +15,21 @@ spec:
       mountPath: /var/run/docker.sock
     - name: workspace-volume
       mountPath: /home/jenkins/agent
+
   - name: jnlp
-    image: jenkins/inbound-agent:latest
+    image: jenkins/inbound-agent:3309.v27b_9314fd1a_4-1
     env:
+    - name: JENKINS_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: jenkins-agent
+          key: jenkins-secret
     - name: JENKINS_AGENT_WORKDIR
       value: /home/jenkins/agent
     volumeMounts:
     - name: workspace-volume
       mountPath: /home/jenkins/agent
+
   volumes:
   - name: docker-sock
     hostPath:
