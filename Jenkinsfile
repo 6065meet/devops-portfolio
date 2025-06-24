@@ -1,44 +1,40 @@
 pipeline {
     agent {
         kubernetes {
-            label 'devops-agent'
             yamlFile 'jenkins/k8s-agent.yaml'
+            defaultContainer 'docker'
         }
     }
-
     environment {
-        DOCKER_USER = credentials('docker-username')
-        DOCKER_PASS = credentials('docker-password')
+        IMAGE_NAME = "6065meet/devops-portfolio"
+        TAG = "latest"
     }
-
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/6065meet/devops-portfolio.git'
+                git 'https://github.com/6065meet/devops-portfolio'
             }
         }
 
         stage('Build & Push Docker Image') {
             steps {
-                container('docker') {
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
-                        sh '''
-                            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                            docker build -t 6065meet/devops-portfolio:latest .
-                            docker push 6065meet/devops-portfolio:latest
-                        '''
-                    }
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker build -t $IMAGE_NAME:$TAG .
+                        docker push $IMAGE_NAME:$TAG
+                    '''
                 }
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                container('docker') {
-                    sh '''
-                        kubectl apply -f k8s/
-                    '''
-                }
+                sh 'kubectl apply -f k8s/'
             }
         }
     }
